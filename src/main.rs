@@ -31,7 +31,7 @@ fn main() {
             if let MessageKind::Text {ref data, ..} = message.kind {
                 println!("<{}>: {}", &message.from.first_name, data);
                 let resp = alg.pipe(data).unwrap();
-                let s: Vec<SentimentResponse> = serde_json::from_value(resp.into_json().unwrap()).unwrap();
+                let s: Vec<SentimentResponse> = serde_json::from_str(&resp.to_string()).unwrap();
                 api.spawn(message.text_reply(
                     format!("compound:{}\nnegative:{}\nneutral:{}\npositive:{}", s[0].compound, s[0].negative, s[0].neutral, s[0].positive)
                 ));
