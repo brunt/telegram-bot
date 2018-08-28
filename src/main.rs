@@ -7,7 +7,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-use std::env;
+use std::{env, thread, time};
 use futures::Stream;
 use tokio_core::reactor::Core;
 use telegram_bot::*;
@@ -26,26 +26,31 @@ fn main() {
 
     // Fetch new updates via long poll method
     let future = api.stream().for_each(|update| {
-        // If the received update contains a new message...
-        if let UpdateKind::Message(message) = update.kind {
-            if let MessageKind::Text {ref data, ..} = message.kind {
-                println!("<{}>: {}", &message.from.first_name, data);
-                if let Ok(resp) = alg.pipe(data) {
-                    match serde_json::from_str::<Vec<SentimentResponse>>(&resp.to_string()){
-                        Ok(s) => api.spawn(message.text_reply(
-                            format!("compound:{}\nnegative:{}\nneutral:{}\npositive:{}", s[0].compound, s[0].negative, s[0].neutral, s[0].positive)
-                        )),
-                        Err(e) => println!("{}", e),
+        match update.kind {
+            UpdateKind::Message(message) => {
+                if let MessageKind::Text {ref data, ..} = message.kind {
+                    println!("<{}>: {}", &message.from.first_name, data);
+                    if let Ok(resp) = alg.pipe(data) {
+                        match serde_json::from_str::<Vec<SentimentResponse>>(&resp.to_string()){
+                            Ok(s) => api.spawn(message.text_reply(
+                                format!("compound:{}\nnegative:{}\nneutral:{}\npositive:{}", s[0].compound, s[0].negative, s[0].neutral, s[0].positive)
+                            )),
+                            Err(e) => println!("{}", e),
+                        }
                     }
                 }
-
+            }
+            _ => {
+                println!("Retrying in 30 seconds.");
+                thread::sleep(time::Duration::new(30,0))
             }
         }
         Ok(())
     });
     match core.run(future) {
         Ok(f) => f,
-        Err(f) => println!("{}", f),
+        Err(f) => println!("{}", f)
+
     }
 }
 
