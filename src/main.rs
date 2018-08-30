@@ -24,14 +24,13 @@ fn main() {
     let token = env::var("TELEGRAM_BOT_TOKEN").expect("Missing TELEGRAM_BOT_TOKEN value");
     let api = Api::configure(token).build(core.handle()).expect("The API token may not be correct");
 
-    // Fetch new updates via long poll method
-    let future = api.stream().for_each(|update| {
-        match update.kind {
-            UpdateKind::Message(message) => {
-                if let MessageKind::Text {ref data, ..} = message.kind {
+    loop { //using a primitive loop until I find a fancy way of dealing with the error returned by for_each when it occurs
+        let future = api.stream().for_each(|update| {
+            if let UpdateKind::Message(message) = update.kind {
+                if let MessageKind::Text { ref data, .. } = message.kind {
                     println!("<{}>: {}", &message.from.first_name, data);
                     if let Ok(resp) = alg.pipe(data) {
-                        match serde_json::from_str::<Vec<SentimentResponse>>(&resp.to_string()){
+                        match serde_json::from_str::<Vec<SentimentResponse>>(&resp.to_string()) {
                             Ok(s) => api.spawn(message.text_reply(
                                 format!("compound:{}\nnegative:{}\nneutral:{}\npositive:{}", s[0].compound, s[0].negative, s[0].neutral, s[0].positive)
                             )),
@@ -40,17 +39,15 @@ fn main() {
                     }
                 }
             }
-            _ => {
-                println!("Retrying in 30 seconds.");
-                thread::sleep(time::Duration::new(30,0))
+            Ok(())
+        });
+        match core.run(future) {
+            Ok(f) => f,
+            Err(f) => {
+                println!("{}: trying again in 30s", f);
+                thread::sleep(time::Duration::new(30, 0));
             }
         }
-        Ok(())
-    });
-    match core.run(future) {
-        Ok(f) => f,
-        Err(f) => println!("{}", f)
-
     }
 }
 
