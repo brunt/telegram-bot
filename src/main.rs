@@ -47,7 +47,7 @@ fn main() {
                                 direction: data_vec[0].to_string().to_lowercase(),
                             }){
                                 api.spawn(message.text_reply(
-                                    format!("station: {}\ndirection: {}\ntime: {}", s.station, s.direction, s.time)
+                                    format!("station: {}\ndirection: {}\nline: {}\ntime: {}", s.station, s.direction, s.line, s.time)
                                 ));
                             }
                         } else if !entities.is_empty() { //a non-empty vec indicates a url was in the link
@@ -90,6 +90,7 @@ struct NextArrivalRequest {
 struct NextArrivalResponse {
     station: String,
     direction: String,
+    line: String,
     time: String,
 }
 
