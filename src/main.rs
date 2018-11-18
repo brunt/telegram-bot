@@ -13,14 +13,22 @@ extern crate reqwest;
 
 use algorithmia::Algorithmia;
 use futures::Stream;
-use regex::Regex;
+//use regex::Regex;
 use std::{env, thread, time};
 use telegram_bot::{Api, CanReplySendMessage, MessageKind, UpdateKind};
 use tokio_core::reactor::Core;
 
+mod spending;
+mod arrival;
+use arrival::{is_next_arrival_request,next_arrival_request, NextArrivalRequest};
+use spending::{is_spent_request, parse_spent_request};
+
 fn main() {
     //metro schedule api stuff
     let metro_api_url = env::var("METRO_API_URL").expect("Missing METRO_API_URL value");
+    let spending_add_url = env::var("SPENDING_API_ADD").expect("Missing SPENDING_API_URL value");
+    let spending_total_url = env::var("SPENDING_API_TOTAL").expect("Missing SPENDING_API_URL value");
+    let spending_reset_url = env::var("SPENDING_API_RESET").expect("Missing SPENDING_API_URL value");
 
     //Algorithmia stuff
     let alg_token = env::var("ALGORITHMIA_TOKEN").expect("Missing ALGORITHMIA_TOKEN value");
@@ -41,15 +49,21 @@ fn main() {
                     MessageKind::Text{ ref data, ref entities } => {
                         println!("<{}>: {}, entities {:?}", &message.from.first_name, data, entities);
                         if is_next_arrival_request(data) {
-                            let data_vec: Vec<&str> = data.splitn(2,' ').collect();
-                            if let Ok(s) = next_arrival_request(&metro_api_url, NextArrivalRequest{
+                            let data_vec: Vec<&str> = data.splitn(2, ' ').collect();
+                            if let Ok(s) = next_arrival_request(&metro_api_url, NextArrivalRequest {
                                 station: data_vec[1].to_string().to_lowercase(),
                                 direction: data_vec[0].to_string().to_lowercase(),
-                            }){
+                            }) {
                                 api.spawn(message.text_reply(
                                     format!("station: {}\ndirection: {}\nline: {}\ntime: {}", s.station, s.direction, s.line, s.time)
                                 ));
                             }
+                        } else if is_spent_request(data) {
+                            let split: Vec<&str> = data.split(' ').collect();
+                            api.spawn(message.text_reply(
+                                parse_spent_request(split[1],
+                                                    (&spending_reset_url, &spending_total_url, &spending_add_url))
+                            ));
                         } else if !entities.is_empty() { //a non-empty vec indicates a url was in the link
 //                            for e in entities { the offset and length values are not public in the entity struct so for now I'll just assume the entire message is a link.
 //                                let url = &message[e.offset..e.length];
@@ -80,34 +94,3 @@ fn main() {
     }
 }
 
-#[derive(Serialize)]
-struct NextArrivalRequest {
-    station: String,
-    direction: String,
-}
-
-#[derive(Deserialize)]
-struct NextArrivalResponse {
-    station: String,
-    direction: String,
-    line: String,
-    time: String,
-}
-
-fn is_next_arrival_request(text: &str) -> bool {
-    lazy_static! {
-        static ref NARE: Regex =
-            Regex::new(r"(east|west|West|East)\s[a-zA-Z0-9]+\s?[a-zA-Z]*").unwrap();
-    }
-    NARE.is_match(text)
-}
-
-fn next_arrival_request(
-    url: &str,
-    req: NextArrivalRequest,
-) -> Result<NextArrivalResponse, reqwest::Error> {
-    let client = reqwest::Client::new();
-    let mut res = client.post(url).json(&req).send()?;
-    let next_arrival: NextArrivalResponse = res.json()?;
-    Ok(next_arrival)
-}
