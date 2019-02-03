@@ -10,29 +10,28 @@ fn spent_request(url: &str, req: SpentRequest) -> Result<SpentResponse, reqwest:
 //determine if request was for total, reset, or addition, and perform that action, return a formatted string of the results.
 pub fn parse_spent_request(input: &str, urls: (&str, &str, &str)) -> String {
     match input {
-        "reset" => {
-            match spent_get_request(urls.0) {
-                Ok(s) => format!("total: {}\ntransactions: {:?}", s.total, s.transactions),
-                Err(_) => "error calling api".to_string()
-            }
+        "reset" => match spent_get_request(urls.0) {
+            Ok(s) => format!("total: {}\ntransactions: {:?}", s.total, s.transactions),
+            Err(_) => "error calling api".to_string(),
         },
-        "total" => {
-            match spent_get_request(urls.1) {
-                Ok(s) => format!("total: {}\ntransactions: {:?}", s.total, s.transactions),
-                Err(_) => "error calling api".to_string()
-            }
+        "total" => match spent_get_request(urls.1) {
+            Ok(s) => format!("total: {}\ntransactions: {:?}", s.total, s.transactions),
+            Err(_) => "error calling api".to_string(),
         },
         _ => {
             match input.parse::<f64>() {
                 Ok(_) => {
-                    match spent_request(urls.2, SpentRequest{
-                        amount: input.parse::<f64>().unwrap() //should check this
-                    }) {
+                    match spent_request(
+                        urls.2,
+                        SpentRequest {
+                            amount: input.parse::<f64>().unwrap(), //should check this
+                        },
+                    ) {
                         Ok(s) => format!("total: {}", s.total),
-                        Err(_) => "error calling api".to_string()
+                        Err(_) => "error calling api".to_string(),
                     }
-                },
-                Err(_) => "cannot parse that value as float".to_string()
+                }
+                Err(_) => "cannot parse that value as float".to_string(),
             }
         }
     }
@@ -60,7 +59,7 @@ pub struct SpentResponse {
     pub total: String,
 }
 
-#[derive(Deserialize,Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct SpentTotalResponse {
     pub total: String,
     pub transactions: Vec<String>,
