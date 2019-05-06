@@ -49,6 +49,10 @@ pub fn is_spent_request(text: &str) -> bool {
     NSRE.is_match(text)
 }
 
+pub fn help_spending() -> &'static str {
+    "Spending Tracker:\nspent total\nspent reset\nspent 10.67"
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct SpentRequest {
     pub amount: f64,

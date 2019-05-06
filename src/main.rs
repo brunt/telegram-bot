@@ -18,8 +18,8 @@ use telegram_bot_fork::{Api, CanReplySendMessage, Error, MessageKind, Update, Up
 
 mod arrival;
 mod spending;
-use arrival::{is_next_arrival_request, next_arrival_request, NextArrivalRequest};
-use spending::{is_spent_request, parse_spent_request};
+use arrival::{help_schedule, is_next_arrival_request, next_arrival_request, NextArrivalRequest};
+use spending::{help_spending, is_spent_request, parse_spent_request};
 
 fn main() {
     tokio::runtime::current_thread::Runtime::new()
@@ -39,7 +39,7 @@ fn main() {
             let alg_token = env::var("ALGORITHMIA_TOKEN").expect("Missing ALGORITHMIA_TOKEN value");
             let client = Algorithmia::client(alg_token);
 
-            let token = env::var("TELEGRAM_BOT_TOKEN").unwrap();
+            let token = env::var("TELEGRAM_BOT_TOKEN").expect("Missing TELEGRAM_BOT_TOKEN value");
             let api = Api::new(token).unwrap();
 
             // Convert stream to the stream with errors in result
@@ -57,6 +57,15 @@ fn main() {
                                 MessageKind::Text{ ref data, ref entities } => {
                                     println!("<{}>: {}, entities {:?}", &message.from.first_name, data, entities);
                                     match data {
+                                        x if x.eq("Help") => {
+                                            api.spawn(message.text_reply(helpmsg()));
+                                        },
+                                        x if x.eq("Help schedule") => {
+                                            api.spawn(message.text_reply(help_schedule()));
+                                        },
+                                        x if x.eq("Help spending") => {
+                                            api.spawn(message.text_reply(help_spending()));
+                                        },
                                         x if is_next_arrival_request(x) => {
                                             let data_vec: Vec<&str> = x.splitn(2, ' ').collect();
                                             if let Ok(s) = next_arrival_request(&metro_api_url, NextArrivalRequest {
@@ -101,4 +110,8 @@ fn main() {
                 Ok(())
             })
         })).expect("error running future");
+}
+
+fn helpmsg() -> &'static str {
+    "Use the following for additional details:\nhelp schedule\nhelp spending\nhelp summarize"
 }
