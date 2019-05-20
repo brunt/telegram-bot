@@ -1,6 +1,6 @@
 [package]
-name = "telegram-bot"
-version = "0.1.0"
+name = "telegram-chatbot"
+version = "0.2.0"
 authors = ["Bryant Deters <bryantdeters@gmail.com>"]
 edition = "2018"
 

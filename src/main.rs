@@ -73,7 +73,7 @@ fn main() {
                                                 direction: data_vec[0].to_string().to_lowercase(),
                                             }) {
                                                 Ok(s) => {
-                                                    api.spawn(message.text_rely(
+                                                    api.spawn(message.text_reply(
                                                         format!("station: {}\ndirection: {}\nline: {}\ntime: {}",
                                                                                         s.station,
                                                                                         s.direction,
