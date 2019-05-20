@@ -68,12 +68,20 @@ fn main() {
                                         },
                                         x if is_next_arrival_request(x) => {
                                             let data_vec: Vec<&str> = x.splitn(2, ' ').collect();
-                                            if let Ok(s) = next_arrival_request(&metro_api_url, NextArrivalRequest {
+                                            match next_arrival_request(&metro_api_url, NextArrivalRequest{
                                                 station: data_vec[1].to_string().to_lowercase(),
                                                 direction: data_vec[0].to_string().to_lowercase(),
                                             }) {
-                                                api.spawn(message.text_reply(format!("station: {}\ndirection: {}\nline: {}\ntime: {}", s.station, s.direction, s.line, s.time)
-                                                ));
+                                                Ok(s) => {
+                                                    api.spawn(message.text_rely(
+                                                        format!("station: {}\ndirection: {}\nline: {}\ntime: {}",
+                                                                                        s.station,
+                                                                                        s.direction,
+                                                                                        s.line,
+                                                                                        s.time
+                                                    )));
+                                                },
+                                                Err(_) => api.spawn(message.text_reply("An error occurred retrieving the schedule"))
                                             }
                                         },
                                         x if is_spent_request(x) => {

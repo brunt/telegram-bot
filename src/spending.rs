@@ -18,22 +18,13 @@ pub fn parse_spent_request(input: &str, urls: (&str, &str, &str)) -> String {
             Ok(s) => format!("total: {}\ntransactions: {:?}", s.total, s.transactions),
             Err(_) => "error calling api".to_string(),
         },
-        _ => {
-            match input.parse::<f64>() {
-                Ok(_) => {
-                    match spent_request(
-                        urls.2,
-                        SpentRequest {
-                            amount: input.parse::<f64>().unwrap(), //should check this
-                        },
-                    ) {
-                        Ok(s) => format!("total: {}", s.total),
-                        Err(_) => "error calling api".to_string(),
-                    }
-                }
-                Err(_) => "cannot parse that value as float".to_string(),
-            }
-        }
+        _ => match input.parse::<f64>() {
+            Ok(n) => match spent_request(urls.2, SpentRequest { amount: n }) {
+                Ok(s) => format!("total: {}", s.total),
+                Err(_) => "error calling api".to_string(),
+            },
+            Err(_) => "cannot parse that value as float".to_string(),
+        },
     }
 }
 fn spent_get_request(url: &str) -> Result<SpentTotalResponse, reqwest::Error> {
