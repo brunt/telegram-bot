@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::fmt;
 
 pub fn is_next_arrival_request(text: &str) -> bool {
     lazy_static! {
@@ -72,4 +73,14 @@ pub struct NextArrivalResponse {
     pub direction: String,
     pub line: String,
     pub time: String,
+}
+
+impl fmt::Display for NextArrivalResponse {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+        write!(f, "station: {}\ndirection: {}\nline: {}\ntime: {}",
+                   self.station,
+                   self.direction,
+                   self.line,
+                   self.time)
+    }
 }

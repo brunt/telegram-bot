@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::fmt;
 
 fn spent_request(url: &str, req: SpentRequest) -> Result<SpentResponse, reqwest::Error> {
     let client = reqwest::Client::new();
@@ -11,16 +12,16 @@ fn spent_request(url: &str, req: SpentRequest) -> Result<SpentResponse, reqwest:
 pub fn parse_spent_request(input: &str, urls: (&str, &str, &str)) -> String {
     match input {
         "reset" => match spent_get_request(urls.0) {
-            Ok(s) => format!("total: {}\ntransactions: {:?}", s.total, s.transactions),
+            Ok(s) => s.to_string(),
             Err(_) => "error calling api".to_string(),
         },
         "total" => match spent_get_request(urls.1) {
-            Ok(s) => format!("total: {}\ntransactions: {:?}", s.total, s.transactions),
+            Ok(s) => s.to_string(),
             Err(_) => "error calling api".to_string(),
         },
         _ => match input.parse::<f64>() {
             Ok(n) => match spent_request(urls.2, SpentRequest { amount: n }) {
-                Ok(s) => format!("total: {}", s.total),
+                Ok(s) => s.to_string(),
                 Err(_) => "error calling api".to_string(),
             },
             Err(_) => "cannot parse that value as float".to_string(),
@@ -54,8 +55,22 @@ pub struct SpentResponse {
     pub total: String,
 }
 
+impl fmt::Display for SpentResponse {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "total: {}", self.total)
+    }
+}
+
+
 #[derive(Deserialize, Serialize)]
 pub struct SpentTotalResponse {
     pub total: String,
     pub transactions: Vec<String>,
 }
+
+impl fmt::Display for SpentTotalResponse {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "total: {}\ntransactions: {:?}", self.total, self.transactions)
+    }
+}
+

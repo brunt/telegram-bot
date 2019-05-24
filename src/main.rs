@@ -1,5 +1,8 @@
 extern crate algorithmia;
+extern crate env_logger;
 extern crate futures;
+#[macro_use]
+extern crate log;
 extern crate serde;
 extern crate serde_json;
 extern crate telegram_bot_fork;
@@ -55,7 +58,7 @@ fn main() {
                         if let UpdateKind::Message(message) = update.kind {
                             match message.kind {
                                 MessageKind::Text{ ref data, ref entities } => {
-                                    println!("<{}>: {}, entities {:?}", &message.from.first_name, data, entities);
+                                    debug!("<{}>: {}, entities {:?}", &message.from.first_name, data, entities);
                                     match data {
                                         x if x.eq("Help") => {
                                             api.spawn(message.text_reply(helpmsg()));
@@ -73,20 +76,17 @@ fn main() {
                                                 direction: data_vec[0].to_string().to_lowercase(),
                                             }) {
                                                 Ok(s) => {
-                                                    api.spawn(message.text_reply(
-                                                        format!("station: {}\ndirection: {}\nline: {}\ntime: {}",
-                                                                                        s.station,
-                                                                                        s.direction,
-                                                                                        s.line,
-                                                                                        s.time
-                                                    )));
+                                                    api.spawn(message.text_reply(s.to_string()));
                                                 },
                                                 Err(_) => api.spawn(message.text_reply("An error occurred retrieving the schedule"))
                                             }
                                         },
                                         x if is_spent_request(x) => {
                                             let split: Vec<&str> = x.split(' ').collect();
-                                            api.spawn(message.text_reply(parse_spent_request(split[1], (&spending_reset_url, &spending_total_url, &spending_add_url))));
+                                            api.spawn(message.text_reply(parse_spent_request(
+                                                split[1],
+                                                (&spending_reset_url,
+                                                 &spending_total_url, &spending_add_url))));
                                         },
                                         _ => {
                                             if !entities.is_empty() { //a non-empty vec indicates a url was in the link
@@ -103,7 +103,7 @@ fn main() {
                                     }
                                 },
                                 MessageKind::Photo { ref data, .. } => {
-                                    println!("{}: {:?}", &message.from.first_name, data);
+                                    info!("{}: {:?}", &message.from.first_name, data);
                                     api.spawn(message.text_reply("That's a great pic and I'm still trying to figure out how to interact with it."));
                                 },
                                 _ => (),
@@ -111,7 +111,7 @@ fn main() {
                         }
                     },
                     Err(e) => {
-                        println!("{}: trying again in 30s", e);
+                        error!("{}: trying again in 30s", e);
                         thread::sleep(time::Duration::from_secs(30));
                     }
                 }
