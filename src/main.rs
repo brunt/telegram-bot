@@ -23,6 +23,7 @@ mod arrival;
 mod spending;
 use arrival::{help_schedule, is_next_arrival_request, next_arrival_request, NextArrivalRequest};
 use spending::{help_spending, is_spent_request, parse_spent_request};
+use crate::spending::is_spent_category_request;
 
 fn main() {
     tokio::runtime::current_thread::Runtime::new()
@@ -83,10 +84,19 @@ fn main() {
                                         },
                                         x if is_spent_request(x) => {
                                             let split: Vec<&str> = x.split(' ').collect();
-                                            api.spawn(message.text_reply(parse_spent_request(
-                                                split[1],
-                                                (&spending_reset_url,
-                                                 &spending_total_url, &spending_add_url))));
+                                            if is_spent_category_request(x) {
+                                                api.spawn(message.text_reply(parse_spent_request(
+                                                    split[1],
+                                                    Some(split[2].into()),
+                                                    (&spending_reset_url,
+                                                     &spending_total_url, &spending_add_url))));
+                                            } else {
+                                                api.spawn(message.text_reply(parse_spent_request(
+                                                    split[1],
+                                                    None,
+                                                    (&spending_reset_url,
+                                                     &spending_total_url, &spending_add_url))));
+                                            }
                                         },
                                         _ => {
                                             if !entities.is_empty() { //a non-empty vec indicates a url was in the link
