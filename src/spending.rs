@@ -107,11 +107,11 @@ impl fmt::Display for Category {
 impl std::convert::From<&str> for Category{
     fn from(s: &str) -> Self {
         match s {
-            "Dining" => Category::Dining,
-            "Travel" => Category::Travel,
-            "Merchandise" => Category::Merchandise,
-            "Entertainment" => Category::Entertainment,
-            "Other" => Category::Other,
+            "Dining" | "dining" => Category::Dining,
+            "Travel" | "travel" => Category::Travel,
+            "Merchandise" | "merchandise" => Category::Merchandise,
+            "Entertainment" | "entertainment" => Category::Entertainment,
+            "Other" | "other" => Category::Other,
             _ => Category::Other
         }
     }
