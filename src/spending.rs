@@ -43,7 +43,7 @@ pub fn is_spent_request(text: &str) -> bool {
 pub fn is_spent_category_request(text: &str) -> bool {
     lazy_static! {
         static ref NSREC: Regex =
-            Regex::new(r"(spent|Spent)\s(total|reset|-?[0-9]+\.?[0-9]+)\s(dining|travel|merchandise|entertainment|other)").unwrap();
+            Regex::new(r"(spent|Spent)\s(total|reset|-?[0-9]+\.?[0-9]+)\s(dining|grocery|travel|merchandise|entertainment|other)").unwrap();
     }
     NSREC.is_match(text)
 }
@@ -85,6 +85,7 @@ impl fmt::Display for SpentTotalResponse {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Category {
     Dining,
+    Grocery,
     Travel,
     Merchandise,
     Entertainment,
@@ -95,6 +96,7 @@ impl fmt::Display for Category {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let print = match *self {
             Category::Dining => "Dining",
+            Category::Grocery => "Grocery",
             Category::Travel => "Travel",
             Category::Merchandise => "Merchandise",
             Category::Entertainment => "Entertainment",
@@ -108,6 +110,7 @@ impl std::convert::From<&str> for Category{
     fn from(s: &str) -> Self {
         match s {
             "Dining" | "dining" => Category::Dining,
+            "Grocery" | "grocery" => Category::Grocery,
             "Travel" | "travel" => Category::Travel,
             "Merchandise" | "merchandise" => Category::Merchandise,
             "Entertainment" | "entertainment" => Category::Entertainment,
@@ -133,6 +136,7 @@ mod tests {
     #[test]
     fn test_is_spent_category_request() {
         assert_eq!(is_spent_category_request("spent 10.00 dining"), true);
+        assert_eq!(is_spent_category_request("spent 10.00 grocery"), true);
         assert_eq!(is_spent_category_request("spent 10.00 entertainment"), true);
         assert_eq!(is_spent_category_request("spent 10.00 merchandise"), true);
         assert_eq!(is_spent_category_request("spent 10.00 travel"), true);
