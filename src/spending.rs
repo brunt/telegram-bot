@@ -1,5 +1,7 @@
 use regex::Regex;
 use std::fmt;
+use lazy_static::*;
+use serde_derive::{Serialize, Deserialize};
 
 fn spent_request(url: &str, req: SpentRequest) -> Result<SpentResponse, reqwest::Error> {
     let client = reqwest::Client::new();

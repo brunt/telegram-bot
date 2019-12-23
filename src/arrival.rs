@@ -1,5 +1,7 @@
 use regex::Regex;
 use std::fmt;
+use lazy_static::*;
+use serde_derive::{Serialize, Deserialize};
 
 pub fn is_next_arrival_request(text: &str) -> bool {
     lazy_static! {

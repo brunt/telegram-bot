@@ -1,19 +1,4 @@
-extern crate algorithmia;
-extern crate env_logger;
-extern crate futures;
-#[macro_use]
-extern crate log;
-extern crate serde;
-extern crate serde_json;
-extern crate telegram_bot_fork;
-extern crate tokio;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate lazy_static;
-extern crate regex;
-extern crate reqwest;
-
+use log::{debug, error, info};
 use algorithmia::Algorithmia;
 use futures::{future::lazy, Stream};
 use std::{env, thread, time};
