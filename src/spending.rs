@@ -1,7 +1,7 @@
-use regex::Regex;
-use std::fmt;
 use lazy_static::*;
-use serde_derive::{Serialize, Deserialize};
+use regex::Regex;
+use serde_derive::{Deserialize, Serialize};
+use std::fmt;
 
 fn spent_request(url: &str, req: SpentRequest) -> Result<SpentResponse, reqwest::Error> {
     let client = reqwest::Client::new();
@@ -63,7 +63,6 @@ impl fmt::Display for SpentResponse {
     }
 }
 
-
 #[derive(Deserialize, Serialize)]
 pub struct SpentTotalResponse {
     pub total: String,
@@ -72,7 +71,10 @@ pub struct SpentTotalResponse {
 
 impl fmt::Display for SpentTotalResponse {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "total: {}\ntransactions: {:?}", self.total, self.transactions)
+        write!(
+            f,
+            "total: {}\ntransactions: {:?}",
+            self.total, self.transactions
+        )
     }
 }
-

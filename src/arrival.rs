@@ -1,7 +1,7 @@
-use regex::Regex;
-use std::fmt;
 use lazy_static::*;
-use serde_derive::{Serialize, Deserialize};
+use regex::Regex;
+use serde_derive::{Deserialize, Serialize};
+use std::fmt;
 
 pub fn is_next_arrival_request(text: &str) -> bool {
     lazy_static! {
@@ -78,11 +78,11 @@ pub struct NextArrivalResponse {
 }
 
 impl fmt::Display for NextArrivalResponse {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        write!(f, "station: {}\ndirection: {}\nline: {}\ntime: {}",
-                   self.station,
-                   self.direction,
-                   self.line,
-                   self.time)
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "station: {}\ndirection: {}\nline: {}\ntime: {}",
+            self.station, self.direction, self.line, self.time
+        )
     }
 }
