@@ -47,7 +47,14 @@ pub fn parse_weather_request(context: &str, token: &str) -> String {
             let resp: ApiResponse = resp.json().unwrap();
             let mut s = String::with_capacity(80); //guessing at capacity
             if let Some(alerts) = resp.alerts {
-                s.push_str(&format!("Alerts: {:?}\n", alerts))
+                match alerts.len() {
+                    x if x > 1 => s.push_str(&format!("{} Alerts:\n", x)),
+                    x => s.push_str(&format!("{} Alert:\n", x)),
+                }
+                s.push_str(&format!("Alerts: {:?}\n", alerts));
+                for a in alerts {
+                    s.push_str(&format!("{}\n{}\n", a.title, a.description));
+                }
             }
 
             //build for current
