@@ -51,7 +51,6 @@ pub fn parse_weather_request(context: &str, token: &str) -> String {
                     x if x > 1 => s.push_str(&format!("{} Alerts:\n", x)),
                     x => s.push_str(&format!("{} Alert:\n", x)),
                 }
-                s.push_str(&format!("Alerts: {:?}\n", alerts));
                 for a in alerts {
                     s.push_str(&format!("{}\n{}\n", a.title, a.description));
                 }
