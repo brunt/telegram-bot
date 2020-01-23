@@ -1,46 +1,22 @@
+use chrono::{DateTime, Local, TimeZone, Timelike, Utc};
 use forecast::{ApiClient, ApiResponse, ExcludeBlock, ForecastRequestBuilder};
-use lazy_static::*;
-use regex::Regex;
 use reqwest::Client;
-use chrono::{Timelike, DateTime, Local, TimeZone, Utc};
 
 pub fn help_weather() -> &'static str {
-    r#"Weather examples:
-    weather now
-    weather today
+    r#"Send location to receive weather information.
     Powered by Dark Sky
     https://darksky.net/poweredby/"#
 }
 
-pub fn is_weather_request(text: &str) -> bool {
-    //TODO: handle just 'weather'?
-    lazy_static! {
-        static ref WRE: Regex = Regex::new(r"(W|w)eather\s(now|today).*").unwrap();
-    }
-    WRE.is_match(text)
-}
-
-pub fn parse_weather_request(context: &str, token: &str) -> String {
+pub fn weather_request(token: &str, lat: f64, long: f64) -> String {
     let req = Client::new();
     let call = ApiClient::new(&req);
 
-    let mut blocks: Vec<ExcludeBlock> = Vec::new();
-    blocks.append(&mut vec![
-        ExcludeBlock::Minutely,
-        ExcludeBlock::Flags,
-    ]);
+    let mut blocks: Vec<ExcludeBlock> = vec![ExcludeBlock::Minutely, ExcludeBlock::Flags];
 
-    let forecast_builder = ForecastRequestBuilder::new(token, 38.636, -90.2399); //hardcoding lat & long for STL for now
-    match context {
-        "now" => {
-            blocks.append(&mut vec![ExcludeBlock::Daily, ExcludeBlock::Hourly]);
-        }
-        "today" => {
-            blocks.push(ExcludeBlock::Currently);
-        }
-        _ => (),
-    }
+    let forecast_builder = ForecastRequestBuilder::new(token, lat, long);
     let forecast_req = forecast_builder.exclude_blocks(&mut blocks).build();
+
     match call.get_forecast(forecast_req.clone()) {
         Err(e) => format!("forecast error: {:?}", e),
         Ok(mut resp) => {
@@ -56,7 +32,6 @@ pub fn parse_weather_request(context: &str, token: &str) -> String {
                 }
             }
 
-            //build for current
             if let Some(data) = resp.currently {
                 if let Some(current) = data.summary {
                     s.push_str(&format!("Curently: {}\n", current))
@@ -73,7 +48,6 @@ pub fn parse_weather_request(context: &str, token: &str) -> String {
                     s.push_str(&format!("Today: {}\n", summary))
                 }
             }
-            //build data for daily
             if let Some(data) = resp.daily {
                 if let Some(high) = data.data[0].temperature_high {
                     s.push_str(&format!("High: {}\n", high));
@@ -83,11 +57,19 @@ pub fn parse_weather_request(context: &str, token: &str) -> String {
                 }
                 if let Some(sunrise) = data.data[0].sunrise_time {
                     let time = unix_to_local(sunrise);
-                    s.push_str(&format!("Sunrise: {}:{} AM\n", time.hour() % 12, time.minute()));
+                    s.push_str(&format!(
+                        "Sunrise: {}:{} AM\n",
+                        time.hour() % 12,
+                        time.minute()
+                    ));
                 }
                 if let Some(sunset) = data.data[0].sunset_time {
                     let time = unix_to_local(sunset);
-                    s.push_str(&format!("Sunset: {}:{} PM", time.hour() % 12, time.minute()));
+                    s.push_str(&format!(
+                        "Sunset: {}:{} PM",
+                        time.hour() % 12,
+                        time.minute()
+                    ));
                 }
             }
             s

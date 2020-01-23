@@ -1,12 +1,12 @@
 use algorithmia::Algorithmia;
 use futures::StreamExt;
 use std::env;
-use telegram_bot::{Api, CanReplySendMessage, MessageKind, UpdateKind};
+use telegram_bot::{Api, CanReplySendMessage, GetMe, MessageKind, UpdateKind};
 
 mod arrival;
 mod forecast;
 mod spending;
-use crate::forecast::{help_weather, is_weather_request, parse_weather_request};
+use crate::forecast::{help_weather, weather_request};
 use arrival::{help_schedule, is_next_arrival_request, next_arrival_request, NextArrivalRequest};
 use spending::{help_spending, is_spent_request, parse_spent_request};
 
@@ -30,69 +30,73 @@ async fn main() {
     while let Some(update) = stream.next().await {
         if let Ok(update) = update {
             if let UpdateKind::Message(message) = update.kind {
-                if let MessageKind::Text {
-                    ref data,
-                    ref entities,
-                } = message.kind
-                {
-                    match data {
-                        x if x.eq("Help") => {
-                            api.spawn(message.text_reply(helpmsg()));
-                        }
-                        x if x.eq("Help schedule") => {
-                            api.spawn(message.text_reply(help_schedule()));
-                        }
-                        x if x.eq("Help spending") => {
-                            api.spawn(message.text_reply(help_spending()));
-                        }
-                        x if x.eq("Help weather") => {
-                            api.spawn(message.text_reply(help_weather()));
-                        }
-                        x if is_next_arrival_request(x) => {
-                            let data_vec: Vec<&str> = x.splitn(2, ' ').collect();
-                            match next_arrival_request(
-                                &metro_api_url,
-                                NextArrivalRequest {
-                                    station: data_vec[1].to_string().to_lowercase(),
-                                    direction: data_vec[0].to_string().to_lowercase(),
-                                },
-                            ) {
-                                Ok(s) => {
-                                    api.spawn(message.text_reply(s.to_string()));
-                                }
-                                Err(_) => api.spawn(
-                                    message.text_reply("An error occurred retrieving the schedule"),
-                                ),
+                match message.kind {
+                    MessageKind::Text {
+                        ref data,
+                        ref entities,
+                    } => {
+                        match data {
+                            x if x.eq("Help") => {
+                                api.spawn(message.text_reply(helpmsg()));
                             }
-                        }
-                        x if is_spent_request(x) => {
-                            let split: Vec<&str> = x.split(' ').collect();
-                            api.spawn(message.text_reply(parse_spent_request(
-                                split[1],
-                                (&spending_reset_url, &spending_total_url, &spending_add_url),
-                            )));
-                        }
-                        x if is_weather_request(x) => {
-                            let split: Vec<&str> = x.split(' ').collect();
-                            api.spawn(
-                                message
-                                    .text_reply(parse_weather_request(split[1], &forecast_token)),
-                            )
-                        }
-                        _ => {
-                            if !entities.is_empty() {
-                                //a non-empty vec indicates a url was in the link
-                                // for e in entities { //the offset and length values are not public in the entity struct so for now I'll just assume the entire message is a link.
-                                //     let url = &message[e.offset..e.length];
-                                //     ...
-                                // }
-                                let alg = client.algo("nlp/SummarizeURL/0.1.4");
-                                if let Ok(resp) = alg.pipe(data) {
-                                    api.spawn(message.text_reply(&resp.to_string()));
+                            x if x.eq("Help schedule") => {
+                                api.spawn(message.text_reply(help_schedule()));
+                            }
+                            x if x.eq("Help spending") => {
+                                api.spawn(message.text_reply(help_spending()));
+                            }
+                            x if x.eq("Help weather") => {
+                                api.spawn(message.text_reply(help_weather()));
+                            }
+                            x if is_next_arrival_request(x) => {
+                                let data_vec: Vec<&str> = x.splitn(2, ' ').collect();
+                                match next_arrival_request(
+                                    &metro_api_url,
+                                    NextArrivalRequest {
+                                        station: data_vec[1].to_string().to_lowercase(),
+                                        direction: data_vec[0].to_string().to_lowercase(),
+                                    },
+                                ) {
+                                    Ok(s) => {
+                                        api.spawn(message.text_reply(s.to_string()));
+                                    }
+                                    Err(_) => {
+                                        api.spawn(message.text_reply(
+                                            "An error occurred retrieving the schedule",
+                                        ))
+                                    }
+                                }
+                            }
+                            x if is_spent_request(x) => {
+                                let split: Vec<&str> = x.split(' ').collect();
+                                api.spawn(message.text_reply(parse_spent_request(
+                                    split[1],
+                                    (&spending_reset_url, &spending_total_url, &spending_add_url),
+                                )));
+                            }
+                            _ => {
+                                if !entities.is_empty() {
+                                    //a non-empty vec indicates a url was in the link
+                                    // for e in entities { //the offset and length values are not public in the entity struct so for now I'll just assume the entire message is a link.
+                                    //     let url = &message[e.offset..e.length];
+                                    //     ...
+                                    // }
+                                    let alg = client.algo("nlp/SummarizeURL/0.1.4");
+                                    if let Ok(resp) = alg.pipe(data) {
+                                        api.spawn(message.text_reply(&resp.to_string()));
+                                    }
                                 }
                             }
                         }
                     }
+                    MessageKind::Location { ref data } => {
+                        api.spawn(message.text_reply(weather_request(
+                            &forecast_token,
+                            data.latitude as f64,
+                            data.longitude as f64,
+                        )))
+                    }
+                    _ => {} //MessageKind::Picture, etc
                 }
             }
         }
