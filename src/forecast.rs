@@ -57,19 +57,35 @@ pub fn weather_request(token: &str, lat: f64, long: f64) -> String {
                 }
                 if let Some(sunrise) = data.data[0].sunrise_time {
                     let time = unix_to_local(sunrise);
-                    s.push_str(&format!(
-                        "Sunrise: {}:{} AM\n",
-                        time.hour() % 12,
-                        time.minute()
-                    ));
+                    if time.minute() < 10 {
+                        s.push_str(&format!(
+                            "Sunrise: {}:0{} AM\n",
+                            time.hour() % 12,
+                            time.minute()
+                        ));
+                    } else {
+                        s.push_str(&format!(
+                            "Sunrise: {}:{} AM\n",
+                            time.hour() % 12,
+                            time.minute()
+                        ));
+                    }
                 }
                 if let Some(sunset) = data.data[0].sunset_time {
                     let time = unix_to_local(sunset);
-                    s.push_str(&format!(
-                        "Sunset: {}:{} PM",
-                        time.hour() % 12,
-                        time.minute()
-                    ));
+                    if time.minute() < 10 {
+                        s.push_str(&format!(
+                            "Sunset: {}:0{} PM",
+                            time.hour() % 12,
+                            time.minute()
+                        ));
+                    } else {
+                        s.push_str(&format!(
+                            "Sunset: {}:{} PM",
+                            time.hour() % 12,
+                            time.minute()
+                        ));
+                    }
                 }
             }
             s
