@@ -26,13 +26,7 @@ pub fn parse_spent_request(
             Err(_) => "error calling api".to_string(),
         },
         _ => match input.parse::<f64>() {
-            Ok(n) => match spent_request(
-                urls.2,
-                SpentRequest {
-                    amount: n,
-                    category: category,
-                },
-            ) {
+            Ok(amount) => match spent_request(urls.2, SpentRequest { amount, category }) {
                 Ok(s) => s.to_string(),
                 Err(_) => "error calling api".to_string(),
             },
