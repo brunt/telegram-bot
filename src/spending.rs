@@ -50,7 +50,7 @@ pub fn is_spent_request(text: &str) -> bool {
 pub fn is_spent_category_request(text: &str) -> bool {
     lazy_static! {
         static ref NSREC: Regex =
-            Regex::new(r"(spent|Spent)\s(total|reset|-?[0-9]+\.?[0-9]+)\s(dining|travel|merchandise|entertainment|other)").unwrap();
+            Regex::new(r"(spent|Spent)\s(total|reset|-?[0-9]+\.?[0-9]+)\s(dining|travel|merchandise|entertainment|grocery|other)").unwrap();
     }
     NSREC.is_match(text)
 }
@@ -98,17 +98,19 @@ pub enum Category {
     Travel,
     Merchandise,
     Entertainment,
+    Grocery,
     Other,
 }
 
 impl fmt::Display for Category {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let print = match *self {
-            Category::Dining => "Dining",
-            Category::Travel => "Travel",
-            Category::Merchandise => "Merchandise",
-            Category::Entertainment => "Entertainment",
-            Category::Other => "Other",
+            Self::Dining => "Dining",
+            Self::Travel => "Travel",
+            Self::Merchandise => "Merchandise",
+            Self::Entertainment => "Entertainment",
+            Self::Grocery => "Grocery",
+            Self::Other => "Other",
         };
         write!(f, "{}", print)
     }
@@ -117,12 +119,12 @@ impl fmt::Display for Category {
 impl std::convert::From<&str> for Category {
     fn from(s: &str) -> Self {
         match s {
-            "Dining" | "dining" => Category::Dining,
-            "Travel" | "travel" => Category::Travel,
-            "Merchandise" | "merchandise" => Category::Merchandise,
-            "Entertainment" | "entertainment" => Category::Entertainment,
-            "Other" | "other" => Category::Other,
-            _ => Category::Other,
+            "Dining" | "dining" => Self::Dining,
+            "Travel" | "travel" => Self::Travel,
+            "Merchandise" | "merchandise" => Self::Merchandise,
+            "Entertainment" | "entertainment" => Self::Entertainment,
+            "Grocery" | "grocery" => Self::Grocery,
+            _ => Self::Other,
         }
     }
 }
@@ -147,6 +149,7 @@ mod tests {
         assert_eq!(is_spent_category_request("spent 10.00 merchandise"), true);
         assert_eq!(is_spent_category_request("spent 10.00 travel"), true);
         assert_eq!(is_spent_category_request("spent 10.00 other"), true);
+        assert_eq!(is_spent_category_request("spent 10.00 grocery"), true);
         assert_eq!(is_spent_category_request("spent 10.00 something"), false);
     }
 }
