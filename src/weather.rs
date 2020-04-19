@@ -8,7 +8,7 @@ pub fn help_weather() -> &'static str {
     https://darksky.net/poweredby/"#
 }
 
-pub fn weather_request(token: &str, lat: f64, long: f64) -> String {
+pub async fn weather_request(token: &str, lat: f64, long: f64) -> String {
     let req = Client::new();
     let call = ApiClient::new(&req);
 
@@ -17,10 +17,10 @@ pub fn weather_request(token: &str, lat: f64, long: f64) -> String {
     let forecast_builder = ForecastRequestBuilder::new(token, lat, long);
     let forecast_req = forecast_builder.exclude_blocks(&mut blocks).build();
 
-    match call.get_forecast(forecast_req.clone()) {
+    match call.get_forecast(forecast_req.clone()).await {
         Err(e) => format!("forecast error: {:?}", e),
-        Ok(mut resp) => {
-            let resp: ApiResponse = resp.json().unwrap();
+        Ok(resp) => {
+            let resp: ApiResponse = resp.json().await.unwrap();
             let mut s = String::with_capacity(80); //guessing at capacity
             if let Some(alerts) = resp.alerts {
                 match alerts.len() {

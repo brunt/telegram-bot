@@ -3,30 +3,29 @@ use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 
-fn spent_request(url: &str, req: SpentRequest) -> Result<SpentResponse, reqwest::Error> {
+async fn spent_request(url: &str, req: SpentRequest) -> Result<SpentResponse, reqwest::Error> {
     let client = reqwest::Client::new();
-    let mut res = client.post(url).json(&req).send()?;
-    let response: SpentResponse = res.json()?;
-    Ok(response)
+    let res = client.post(url).json(&req).send().await?.json().await?;
+    Ok(res)
 }
 
 //determine if request was for total, reset, or addition, and perform that action, return a formatted string of the results.
-pub fn parse_spent_request(
+pub async fn parse_spent_request(
     input: &str,
     category: Option<Category>,
     urls: (&str, &str, &str),
 ) -> String {
     match input {
-        "reset" => match spent_get_request(urls.0) {
+        "reset" => match spent_get_request(urls.0).await {
             Ok(s) => s.to_string(),
             Err(_) => "error calling api".to_string(),
         },
-        "total" => match spent_get_request(urls.1) {
+        "total" => match spent_get_request(urls.1).await {
             Ok(s) => s.to_string(),
             Err(_) => "error calling api".to_string(),
         },
         _ => match input.parse::<f64>() {
-            Ok(amount) => match spent_request(urls.2, SpentRequest { amount, category }) {
+            Ok(amount) => match spent_request(urls.2, SpentRequest { amount, category }).await {
                 Ok(s) => s.to_string(),
                 Err(_) => "error calling api".to_string(),
             },
@@ -34,8 +33,11 @@ pub fn parse_spent_request(
         },
     }
 }
-fn spent_get_request(url: &str) -> Result<SpentTotalResponse, reqwest::Error> {
-    let response: SpentTotalResponse = reqwest::get(url)?.json()?;
+async fn spent_get_request(url: &str) -> Result<SpentTotalResponse, reqwest::Error> {
+    let response: SpentTotalResponse = reqwest::get(url)
+        .await?
+        .json::<SpentTotalResponse>()
+        .await?;
     Ok(response)
 }
 

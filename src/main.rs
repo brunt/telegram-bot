@@ -28,11 +28,14 @@ async fn run() {
                     match msg.update.text() {
                         None => {
                             if let Some(loc) = msg.update.location() {
-                                msg.answer(weather_request(
-                                    &config.forecast_token,
-                                    loc.latitude as f64,
-                                    loc.longitude as f64,
-                                ))
+                                msg.answer(
+                                    weather_request(
+                                        &config.forecast_token,
+                                        loc.latitude as f64,
+                                        loc.longitude as f64,
+                                    )
+                                    .await,
+                                )
                                 .send()
                                 .await
                                 .unwrap();
@@ -59,7 +62,9 @@ async fn run() {
                                         station: data_vec[1].to_string().to_lowercase(),
                                         direction: data_vec[0].to_string().to_lowercase(),
                                     },
-                                ) {
+                                )
+                                .await
+                                {
                                     Ok(s) => {
                                         msg.answer(s.to_string()).send().await.unwrap();
                                     }
@@ -74,28 +79,34 @@ async fn run() {
                             x if is_spent_request(x) => {
                                 let split: Vec<&str> = x.split(' ').collect();
                                 if is_spent_category_request(x) {
-                                    msg.answer(parse_spent_request(
-                                        split[1],
-                                        Some(split[2].into()),
-                                        (
-                                            &config.spending_reset_url,
-                                            &config.spending_total_url,
-                                            &config.spending_add_url,
-                                        ),
-                                    ))
+                                    msg.answer(
+                                        parse_spent_request(
+                                            split[1],
+                                            Some(split[2].into()),
+                                            (
+                                                &config.spending_reset_url,
+                                                &config.spending_total_url,
+                                                &config.spending_add_url,
+                                            ),
+                                        )
+                                        .await,
+                                    )
                                     .send()
                                     .await
                                     .unwrap();
                                 } else {
-                                    msg.answer(parse_spent_request(
-                                        split[1],
-                                        None,
-                                        (
-                                            &config.spending_reset_url,
-                                            &config.spending_total_url,
-                                            &config.spending_add_url,
-                                        ),
-                                    ))
+                                    msg.answer(
+                                        parse_spent_request(
+                                            split[1],
+                                            None,
+                                            (
+                                                &config.spending_reset_url,
+                                                &config.spending_total_url,
+                                                &config.spending_add_url,
+                                            ),
+                                        )
+                                        .await,
+                                    )
                                     .send()
                                     .await
                                     .unwrap();

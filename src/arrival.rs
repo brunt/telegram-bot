@@ -11,13 +11,13 @@ pub fn is_next_arrival_request(text: &str) -> bool {
     NARE.is_match(text)
 }
 
-pub fn next_arrival_request(
+pub async fn next_arrival_request(
     url: &str,
     req: NextArrivalRequest,
 ) -> Result<NextArrivalResponse, reqwest::Error> {
     let client = reqwest::Client::new();
-    let mut res = client.post(url).json(&req).send()?;
-    let next_arrival: NextArrivalResponse = res.json()?;
+    let next_arrival: NextArrivalResponse =
+        client.post(url).json(&req).send().await?.json().await?;
     Ok(next_arrival)
 }
 
