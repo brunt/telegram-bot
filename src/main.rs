@@ -18,7 +18,7 @@ use weather::{help_weather, weather_request};
 #[actix_rt::main]
 async fn main() {
     let prometheus = PrometheusMetrics::new("teloxide", Some("/metrics"), None);
-    let counter_opts = opts!("counter", "forecast").namespace("teloxide");
+    let counter_opts = opts!("counter", "requests").namespace("teloxide");
     let counter = IntCounterVec::new(counter_opts, &["request"]).unwrap();
     prometheus
         .registry
