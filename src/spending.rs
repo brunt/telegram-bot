@@ -33,6 +33,7 @@ pub async fn parse_spent_request(
         },
     }
 }
+
 async fn spent_get_request(url: &str) -> Result<SpentTotalResponse, reqwest::Error> {
     let response: SpentTotalResponse = reqwest::get(url)
         .await?
@@ -44,7 +45,7 @@ async fn spent_get_request(url: &str) -> Result<SpentTotalResponse, reqwest::Err
 pub fn is_spent_request(text: &str) -> bool {
     lazy_static! {
         static ref NSRE: Regex =
-            Regex::new(r"(spent|Spent)\s(total|reset|-?[0-9]+\.?[0-9]+)").unwrap();
+            Regex::new(r"(budget|Budget|spent|Spent)\s(total|reset|-?[0-9]+\.?[0-9]+)").unwrap();
     }
     NSRE.is_match(text)
 }
@@ -80,6 +81,7 @@ impl fmt::Display for SpentResponse {
 
 #[derive(Deserialize, Serialize)]
 pub struct SpentTotalResponse {
+    pub budget: String,
     pub total: String,
     pub transactions: Vec<(String, Category)>,
 }
@@ -88,8 +90,8 @@ impl fmt::Display for SpentTotalResponse {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "total: {}\ntransactions: {:?}",
-            self.total, self.transactions
+            "budget: {}\ntotal: {}\ntransactions: {:?}",
+            self.budget, self.total, self.transactions
         )
     }
 }

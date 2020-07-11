@@ -1,10 +1,9 @@
 use actix_web::{App, HttpServer};
-use actix_web_prom::{PrometheusMetrics};
+use actix_web_prom::PrometheusMetrics;
 use futures::StreamExt;
 use prometheus::{opts, IntCounterVec};
 use std::sync::Arc;
 use teloxide::prelude::*;
-
 
 mod arrival;
 mod config;
@@ -22,7 +21,8 @@ async fn main() {
     let counter = IntCounterVec::new(counter_opts, &["request"]).unwrap();
     prometheus
         .registry
-        .register(Box::new(counter.clone())).unwrap();
+        .register(Box::new(counter.clone()))
+        .unwrap();
     let config = Config::from_env();
     HttpServer::new(move || App::new().wrap(prometheus.clone()))
         .bind(format!("0.0.0.0:{}", &config.webserver_port))
@@ -99,38 +99,60 @@ async fn run(config: Arc<Config>, counter: IntCounterVec) {
                             x if is_spent_request(x) => {
                                 counter.with_label_values(&["Spending"]).inc();
                                 let split: Vec<&str> = x.split(' ').collect();
-                                if is_spent_category_request(x) {
-                                    msg.answer(
-                                        parse_spent_request(
-                                            split[1],
-                                            Some(split[2].into()),
-                                            (
-                                                &config.spending_reset_url,
-                                                &config.spending_total_url,
-                                                &config.spending_add_url,
-                                            ),
+                                match split[0] {
+                                    "budget" | "Budget" => {
+                                        msg.answer(
+                                            parse_spent_request(
+                                                split[1],
+                                                None,
+                                                (
+                                                    &config.spending_add_url,
+                                                    &config.spending_total_url,
+                                                    &config.spending_budget_url,
+                                                ),
+                                            )
+                                            .await,
                                         )
-                                        .await,
-                                    )
-                                    .send()
-                                    .await
-                                    .unwrap();
-                                } else {
-                                    msg.answer(
-                                        parse_spent_request(
-                                            split[1],
-                                            None,
-                                            (
-                                                &config.spending_reset_url,
-                                                &config.spending_total_url,
-                                                &config.spending_add_url,
-                                            ),
-                                        )
-                                        .await,
-                                    )
-                                    .send()
-                                    .await
-                                    .unwrap();
+                                        .send()
+                                        .await
+                                        .unwrap();
+                                    }
+                                    "spent" | "Spent" => {
+                                        if is_spent_category_request(x) {
+                                            msg.answer(
+                                                parse_spent_request(
+                                                    split[1],
+                                                    Some(split[2].into()),
+                                                    (
+                                                        &config.spending_reset_url,
+                                                        &config.spending_total_url,
+                                                        &config.spending_add_url,
+                                                    ),
+                                                )
+                                                .await,
+                                            )
+                                            .send()
+                                            .await
+                                            .unwrap();
+                                        } else {
+                                            msg.answer(
+                                                parse_spent_request(
+                                                    split[1],
+                                                    None,
+                                                    (
+                                                        &config.spending_reset_url,
+                                                        &config.spending_total_url,
+                                                        &config.spending_add_url,
+                                                    ),
+                                                )
+                                                .await,
+                                            )
+                                            .send()
+                                            .await
+                                            .unwrap();
+                                        }
+                                    }
+                                    _ => unreachable!(),
                                 }
                             }
                             _ => {}
