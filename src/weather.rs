@@ -2,13 +2,13 @@ use chrono::{DateTime, Local, TimeZone, Timelike, Utc};
 use forecast::{ApiClient, ApiResponse, ExcludeBlock, ForecastRequestBuilder};
 use reqwest::Client;
 
-pub fn help_weather() -> &'static str {
+pub(crate) fn help_weather() -> &'static str {
     r#"Send location to receive weather information.
     Powered by Dark Sky
     https://darksky.net/poweredby/"#
 }
 
-pub async fn weather_request(token: &str, lat: f64, long: f64) -> String {
+pub(crate) async fn weather_request(token: &str, lat: f64, long: f64) -> String {
     let req = Client::new();
     let call = ApiClient::new(&req);
 
