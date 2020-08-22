@@ -89,7 +89,7 @@ impl SpendingAPI {
                     Ok(s) => s.to_string(),
                     Err(_) => "error calling api".to_string(),
                 },
-                _ => match input.parse::<f64>() {
+                _ => match split[1].parse::<f64>() {
                     Ok(amount) => match &self
                         .spending_request(SpentRequest { amount, category })
                         .await
