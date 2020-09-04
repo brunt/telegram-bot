@@ -71,7 +71,7 @@ pub(crate) async fn parse_messages(
             }
             input if is_spent_category_request(input) => {
                 counter.with_label_values(&["Spending"]).inc();
-                let category: &str = input.splitn(3, '_').last().unwrap();
+                let category: &str = input.splitn(3, ' ').last().unwrap();
                 msg.answer_str(
                     &config
                         .spending_api
