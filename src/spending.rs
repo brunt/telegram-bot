@@ -141,11 +141,18 @@ impl fmt::Display for SpentResponse {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct Transaction {
+    amount: String,
+    category: String,
+    time: String,
+}
+
 #[derive(Deserialize, Serialize)]
 pub(crate) struct SpentTotalResponse {
     pub(crate) budget: String,
     pub(crate) total: String,
-    pub(crate) transactions: Vec<(String, Category)>,
+    pub(crate) transactions: Vec<Transaction>,
 }
 
 impl fmt::Display for SpentTotalResponse {
